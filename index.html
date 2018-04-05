@@ -1,0 +1,219 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <title>Simple CobolJS</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="initial-scale=1.0">
+    <link rel="stylesheet" href="materialize/css/materialize.css">
+    <link rel=icon href=./favicon.png>
+    
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="row">
+        <div class="col l12">
+        <h2 class="blue-grey-text center-align">Simple CobolJS</h2>
+        <h6 class="flow-text center-align">Parte I: Declarando variables...</h6>
+        <br>
+        <textarea class="materialize-textarea" placeholder="Declara una variable" id="source-code"></textarea>
+        <br>
+        <div class="waves-input-wrapper center-align">
+            <button class="waves-effect btn" id="test-button" onclick=compile()>COMPILA!</button>
+        </div>
+    </div>
+    </div>
+    <div class="row">
+            <div class="col l12">
+                    <h6 class="flow-text center-align">Parte II: Operaciones aritmeticas...</h6>
+                    <br>
+                    <textarea class="materialize-textarea" placeholder="Ingresa la operacion" id="source-code2"></textarea>
+                    <br>
+                    <div class="waves-input-wrapper center-align">
+                        <button class="waves-effect btn" id="test-button" onclick=operate()>OPERA!</button>
+                    </div>
+             </div>
+    </div>
+    <div class="row">
+            <div class="container">
+                <div class=" s6 m6 center">
+        <div class="card-panel white ">
+            <h3 id="resultado" class=" center "></h3>
+
+        </div>
+    </div>
+    </div>
+    </div>
+    </div>
+    
+    <script src="jquery/jquery-3.3.1.js"></script>
+    <script src="materialize/js/materialize.js"></script>
+
+    <script type="text/javascript">
+        console.log("%c LOG DEL COMPILADOR: ", "color: blue; size: medium");
+        
+        
+        const InputStream = stream => {
+            let out = stream.replace(/.$/, '');
+            return out.split(' ').map(str => str.trim());
+        }
+        
+        const decExpr = /(01|77|88|[0-4][2-9])\s([a-zA-Z]\w*)\s(PIC A\(s\d\d?\)|PIC X\(\d\d?\)|PIC 1 USAGE BIT|USAGE INDEX|PIC N\(\d\d?\)|PIC 9\(\d\d?\)|USAGE OBJECT REFERENCE|USAGE POINTER)\s((VALUE)\s(\'*\w*\'*))?\.$/im;
+                expru=/(01|77|88|[0-4][2-9])\s([a-zA-Z]\w*)\s(PIC 1 USAGE BIT|USAGE INDEX|USAGE OBJECT REFERENCE|USAGE POINTER)\s\.$/im;//usage
+                exprsv=/(01|77|88|[0-4][2-9])\s([a-zA-Z]\w*)\s(PIC A\(\d\d?\)|PIC X\(\d\d?\)|PIC 1 USAGE BIT|USAGE INDEX|PIC N\(\d\d?\)|PIC 9\(\d\d?\)|USAGE OBJECT REFERENCE|USAGE POINTER)\.$/im;//sin value
+        const type = {alphabet: "A", alphanumeric: "X", numeric: "9", boolean: "1"};
+                let varsData = [],
+                data = {};
+        function compile() {
+            const sourceCode = document.getElementById('source-code');
+            var lines = sourceCode.value.split('\n');
+            for(var i = 0;i < lines.length;i++){
+                     let inputVars=InputStream(lines[i]);
+                    var str = lines[i];
+            console.log(inputVars);
+            if (decExpr.test(str)||expru.test(str)||exprsv.test(str)) {
+                Materialize.toast("Declaración correcta", 2000,'rounded teal darken-3');
+            } else {
+                Materialize.toast("Error en declaración", 2000, 'rounded red darken-4');
+                return;
+            }
+            
+            
+            
+
+            let typeId = inputVars[3].charAt(0);
+            let declaredBytes = inputVars[3].substring(2, inputVars[3].length - 1);
+            function countNumeric() {
+                let num = (inputVars[5].length <= declaredBytes) ? parseInt(inputVars[5]) : null;
+                return num;
+            }
+            
+            function countAlpha() {
+                let chars = (inputVars[5].length <= declaredBytes) ? inputVars[5].replace(/\'/g, "") : null;
+                return chars;
+            }
+            
+                switch (typeId) {
+                    case type.alphabet:
+                    if(inputVars[5]!= null){
+                        varsData.push(data = {level: inputVars[0], id:inputVars[1], type: "Alfabético", bytes: declaredBytes, value: countAlpha()});
+                    }else{
+                        varsData.push(data = {level: inputVars[0], id:inputVars[1], type: "Alfabético", bytes: declaredBytes, value: null});
+                    }
+                        break;
+
+                    case type.alphanumeric:
+                    if(inputVars[5]!= null){
+                        varsData.push(data = {level: inputVars[0], id:inputVars[1], type: "Alfanumérico", bytes: declaredBytes, value: countAlpha()});
+                    }else{
+                        varsData.push(data = {level: inputVars[0], id:inputVars[1], type: "Alfanumérico", bytes: declaredBytes, value: null});
+                       
+                    }
+                       break;
+
+                    case type.numeric:
+                    if(inputVars[5]!= null){
+                        varsData.push(data = {level: inputVars[0], id:inputVars[1], type: "Numérico", bytes: declaredBytes, value: countNumeric()});
+                    }else{
+                        varsData.push(data = {level: inputVars[0], id:inputVars[1], type: "Numérico", bytes: declaredBytes, value: null});
+                    }
+                        break;
+
+                    case type.boolean:
+                    if(inputVars[5]!= null){
+                        varsData.push(data = {level: inputVars[0], id:inputVars[1], type: "Booleano", bytes: declaredBytes, value: true});
+                    }else{
+                        varsData.push(data = {level: inputVars[0], id:inputVars[1], type: "Booleano", bytes: declaredBytes, value: null});
+                       
+                    }
+                        break;
+                        
+                    default:
+                        varsData.push({error: `Error de declaración. ${typeId} no es un tipo de dato COBOL.`});
+                        break;
+                }
+                
+                
+            //console.log(JSON.stringify(varsData));
+            console.log(varsData);
+            }
+            
+        };
+        //declaracion en javascript de variables ingresadas por el usuario si es numerico o cualquier otro 
+        
+        //prueba
+        /*01 MINOMBRE PIC A(30) VALUE 'Giovanny'.*/
+
+            //=====================================================================
+            // validacion de operaciones
+
+
+            //expresiones regulares
+           const  opExpr=/(COMPUTE)\s([a-zA-Z]\w*)\s(=)\s(([0-9]+[0-9]*)|([a-zA-Z]\w*))(\s(\+|\-|\*|\/|\*\*)\s(([0-9]+[0-9]*)|([a-zA-Z]\w*)))+\.$/im;
+           declaredVars=[];
+            function operate() {
+                for (let i in varsData) {
+                if (varsData[i].type =="Numérico"){
+                    var declaracion ="var "+varsData[i].id+" ; "+varsData[i].id+" = "+varsData[i].value+";";
+                
+                eval(declaracion);
+                console.log(declaracion);
+                }else{
+                    var declaracion ="var "+varsData[i].id+" ; "+varsData[i].id+" = '"+varsData[i].value+"';";
+                eval(declaracion);
+                console.log(declaracion);
+                }
+                if (varsData[i].value === null) {
+                console.warn(`la variable  ${varsData[i].id}. ha sido declarada sin embargo no se le ha asignado un valor`);
+                }    
+            }
+                var res;
+                const sourceCode2 = document.getElementById('source-code2');
+                if (opExpr.test(sourceCode2.value)){
+                Materialize.toast("la sintaxis de la operacion es correcta",2000,'rounded teal darken-3');
+                
+            }else{
+                Materialize.toast("no ingresaste una operacion valida",2000, 'rounded red darken-4');
+                return;
+            }
+            let inputVars = InputStream(sourceCode2.value);
+                console.log(inputVars);  
+                var varExpr=/([a-zA-Z]\w*)/;
+                for(let i=1;i<=inputVars.length-1;i++){
+                    if(varExpr.test(inputVars[i])){
+                        for(j in varsData){
+                            if (inputVars[i]==varsData[j].id){
+                                declaredVars.push(inputVars[i]);
+                                console.log("la variable "+inputVars[i]+" utilizada en la operacion ya esta previamente definida y es valida");
+                            }
+                        }
+                        if(declaredVars.indexOf(inputVars[i])<0){
+                            console.warn("la variable "+inputVars[i]+" utilizada en la operacion no ha sido previamente definida, la operacion no pudo ser procesada");
+                            Materialize.toast("Ocurrio un error al procesar la operacion",2000,'rounded red darken-4');
+                            document.getElementById("resultado").style.color="red";
+                            document.getElementById("resultado").innerHTML="ERROR";
+                            return;
+                        }
+                    }
+
+                }
+                
+                console.log(sourceCode2.value.slice(7,sourceCode2.value.length-1));
+                var ro= varExpr.exec(sourceCode2.value.slice(7,sourceCode2.value.length-1))[0];
+               // console.log(""+ro);
+            res = eval(sourceCode2.value.slice(7,sourceCode2.value.length-1)+";");
+            
+            console.log("resultado de la operacion ingresada es "+ro+" = "+res);
+            document.getElementById("resultado").style.color="teal";
+            document.getElementById("resultado").innerHTML = ""+ro+" = "+res;
+
+        }
+
+    </script>
+
+</body>
+
+</html>
