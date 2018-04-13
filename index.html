@@ -61,7 +61,7 @@
             return out.split(' ').map(str => str.trim());
         }
         
-        const decExpr = /(01|77|88|[0-4][2-9])\s([a-zA-Z]\w*)\s(PIC A\(s\d\d?\)|PIC X\(\d\d?\)|PIC 1 USAGE BIT|USAGE INDEX|PIC N\(\d\d?\)|PIC 9\(\d\d?\)|USAGE OBJECT REFERENCE|USAGE POINTER)\s((VALUE)\s(\'*\w*\'*))?\.$/im;
+        const decExpr = /(01|77|88|[0-4][2-9])\s([a-zA-Z]\w*)\s(PIC A\(s\d\d?\)|PIC X\(\d\d?\)|PIC 1 USAGE BIT|USAGE INDEX|PIC N\(\d\d?\)|PIC 9\(\d\d?\)|USAGE OBJECT REFERENCE|USAGE POINTER)\s((VALUE)\s(\'*\w*\.?\w*\'*))?\.$/im;
                 expru=/(01|77|88|[0-4][2-9])\s([a-zA-Z]\w*)\s(PIC 1 USAGE BIT|USAGE INDEX|USAGE OBJECT REFERENCE|USAGE POINTER)\s\.$/im;//usage
                 exprsv=/(01|77|88|[0-4][2-9])\s([a-zA-Z]\w*)\s(PIC A\(\d\d?\)|PIC X\(\d\d?\)|PIC 1 USAGE BIT|USAGE INDEX|PIC N\(\d\d?\)|PIC 9\(\d\d?\)|USAGE OBJECT REFERENCE|USAGE POINTER)\.$/im;//sin value
         const type = {alphabet: "A", alphanumeric: "X", numeric: "9", boolean: "1"};
@@ -87,7 +87,8 @@
             let typeId = inputVars[3].charAt(0);
             let declaredBytes = inputVars[3].substring(2, inputVars[3].length - 1);
             function countNumeric() {
-                let num = (inputVars[5].length <= declaredBytes) ? parseInt(inputVars[5]) : null;
+                let num = (inputVars[5].length <= declaredBytes) ? parseFloat(inputVars[5]) : null;
+                console.log(num);
                 return num;
             }
             
@@ -154,6 +155,7 @@
             //expresiones regulares
            const  opExpr=/(COMPUTE)\s([a-zA-Z]\w*)\s(=)\s(([0-9]+[0-9]*)|([a-zA-Z]\w*))(\s(\+|\-|\*|\/|\*\*)\s(([0-9]+[0-9]*)|([a-zA-Z]\w*)))+\.$/im;
            declaredVars=[];
+           var varExpr=/([a-zA-Z]\w*)/;
             function operate() {
                 for (let i in varsData) {
                 if (varsData[i].type =="Numérico"){
@@ -171,17 +173,24 @@
                 }    
             }
                 var res;
+                var f = true;
                 const sourceCode2 = document.getElementById('source-code2');
-                if (opExpr.test(sourceCode2.value)){
+                try {
+                    eval(sourceCode2.value.slice(7,sourceCode2.value.length-1)+";")
+                } catch (error) {
+                    f=false;
+                }
+                if (opExpr.test(sourceCode2.value)||(f&&(/compute/i.test(sourceCode2.value))&&/\(/.test(sourceCode2.value))&&/.$/.test(sourceCode2.value)){ //|(/\(/.test(sourceCode2.value))
                 Materialize.toast("la sintaxis de la operacion es correcta",2000,'rounded teal darken-3');
                 
             }else{
                 Materialize.toast("no ingresaste una operacion valida",2000, 'rounded red darken-4');
                 return;
             }
+            if(!/\(/.test(sourceCode2.value)){ 
             let inputVars = InputStream(sourceCode2.value);
                 console.log(inputVars);  
-                var varExpr=/([a-zA-Z]\w*)/;
+                
                 for(let i=1;i<=inputVars.length-1;i++){
                     if(varExpr.test(inputVars[i])){
                         for(j in varsData){
@@ -210,7 +219,18 @@
             document.getElementById("resultado").style.color="teal";
             document.getElementById("resultado").innerHTML = ""+ro+" = "+res;
 
-        }
+        }else{
+            console.log(sourceCode2.value.slice(7,sourceCode2.value.length-1));
+                var ro= varExpr.exec(sourceCode2.value.slice(7,sourceCode2.value.length-1))[0];
+               // console.log(""+ro);
+            res = eval(sourceCode2.value.slice(7,sourceCode2.value.length-1)+";");
+            
+            console.log("resultado de la operacion ingresada es "+ro+" = "+res);
+            document.getElementById("resultado").style.color="teal";
+            document.getElementById("resultado").innerHTML = ""+ro+" = "+res;
+            }
+            }
+            
 
     </script>
 
